@@ -1,0 +1,17 @@
+---
+// The folded topic menu on desktop entry pages: an arrow and one short line per topic.
+// Hovering lengthens the lines and shows the names; clicking opens the full menu (#topics).
+const { topics, class: className } = Astro.props;
+---
+
+<button type="button" class:list={['rail vt-topics', className]} popovertarget="topics" aria-label="Topics" data-rail>
+  <svg class="rail-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
+  <span class="rail-index" aria-hidden="true">
+    {topics.map((topic, i) => (
+      <span class="rail-item" data-topic={topic.id} style={`--i: ${i}`}>
+        <span class="rail-line"></span>
+        <span class="rail-name">{topic.name}</span>
+      </span>
+    ))}
+  </span>
+</button>

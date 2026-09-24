@@ -1,0 +1,35 @@
+---
+import { render } from 'astro:content';
+import Reading from '../../layouts/Reading.astro';
+import EntryPager from '../../components/EntryPager.astro';
+import { getTopics, formatMonth } from '../../lib/topics.js';
+
+export async function getStaticPaths() {
+  const topics = await getTopics();
+  return topics.flatMap((topic) =>
+    topic.entries.map((entry, index) => ({
+      params: { topic: topic.id, entry: entry.slug },
+      props: { topics, topic, entry, previous: topic.entries[index - 1], next: topic.entries[index + 1] },
+    })),
+  );
+}
+
+const { topics, topic, entry, previous, next } = Astro.props;
+const { title, description, date, draft } = entry.data;
+const { Content } = await render(entry);
+---
+
+<Reading title={title} description={description} path={entry.href} type="article" published={date} topics={topics} currentId={entry.id}>
+  <article>
+    <header>
+      <h1 class="font-display text-3xl text-balance lg:text-4xl">{title}</h1>
+      <p class="mt-4 text-sm text-ink-muted">
+        <time datetime={date.toISOString().slice(0, 10)}>{formatMonth(date)}</time> · {topic.name}{draft && ' · Draft'}
+      </p>
+    </header>
+    <div class="prose mt-12">
+      <Content />
+    </div>
+    <EntryPager previous={previous} next={next} topicName={topic.name} />
+  </article>
+</Reading>

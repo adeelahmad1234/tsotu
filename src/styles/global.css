@@ -1,0 +1,582 @@
+@import "tailwindcss";
+
+/*
+  Design system. Only the values defined here exist as utilities, so every
+  page draws from one palette, one type ramp and square, shadowless shapes.
+  Spacing is Tailwind's 4px scale (p-2 = 8px, p-4 = 16px); layout uses multiples of 8.
+*/
+@theme {
+  --color-*: initial;
+  --color-paper: #f7f3ec;
+  --color-sand: #e7dccb;
+  --color-rule: #ddd0bc;
+  --color-ink: #3a2a1f;
+  --color-ink-muted: #6e5a4a;
+
+  --font-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+
+  --text-*: initial;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1.125rem;
+  --text-base--line-height: 1.75rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 2rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 2.5rem;
+  --text-3xl: 2.5rem;
+  --text-3xl--line-height: 3rem;
+  --text-4xl: 3rem;
+  --text-4xl--line-height: 3.5rem;
+  --text-5xl: 4rem;
+  --text-5xl--line-height: 4.5rem;
+
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* The font stacks themselves come from the Fonts API in astro.config.mjs. */
+@theme inline {
+  --font-display: var(--typeface-display);
+  --font-body: var(--typeface-body);
+  --font-button: var(--typeface-button);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-sand);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 4px;
+  }
+
+  /* Reserve the scrollbar's space so locking scroll behind the menu never shifts the page. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  body:has(:popover-open) {
+    overflow: hidden;
+  }
+}
+
+/* Pages fade into each other; the brand and topic list glide to their new place. */
+@view-transition {
+  navigation: auto;
+}
+
+/* Pages fade through the paper colour: the old page leaves before the new one arrives, so text never overlaps. */
+::view-transition-old(root) {
+  animation-duration: 140ms;
+}
+
+::view-transition-new(root) {
+  animation-duration: 240ms;
+  animation-delay: 140ms;
+  animation-fill-mode: both;
+}
+
+::view-transition-group(brand),
+::view-transition-old(brand),
+::view-transition-new(brand),
+::view-transition-group(topics),
+::view-transition-old(topics),
+::view-transition-new(topics) {
+  animation-duration: 400ms;
+  animation-timing-function: var(--ease-out);
+}
+
+/*
+  The home topic list and the entry-page rail share the name "topics" and the same right edge,
+  so the list folds into the rail and unfolds back out of it. Both keep their natural size,
+  pinned to that edge, inside the moving frame that clips them, so text is never stretched.
+*/
+::view-transition-group(topics) {
+  overflow: clip;
+}
+
+::view-transition-old(topics),
+::view-transition-new(topics) {
+  inset-inline: auto 0;
+  inline-size: auto;
+  block-size: auto;
+}
+
+/* On desktop an open menu folds back into its arrow (top right) when an entry in it is chosen. */
+@media (width >= 64rem) {
+  ::view-transition-old(panel):only-child {
+    animation: vt-fold 280ms var(--ease-out) both;
+  }
+}
+
+@keyframes vt-fold {
+  to {
+    clip-path: inset(0 0 calc(100% - 3rem) calc(100% - 3rem));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vt-brand {
+    view-transition-name: brand;
+  }
+
+  .vt-topics {
+    view-transition-name: topics;
+  }
+
+  .vt-panel {
+    view-transition-name: panel;
+  }
+}
+
+@layer components {
+  /* Title and logo: letters rise in turn on hover. --i is set per letter in Brand.astro. */
+  .wave-char {
+    display: inline-block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .wave:focus-visible .wave-char {
+      animation: wave 600ms var(--ease-out) calc(var(--i) * 18ms) both;
+    }
+
+    @media (hover: hover) {
+      .wave:hover .wave-char {
+        animation: wave 600ms var(--ease-out) calc(var(--i) * 18ms) both;
+      }
+    }
+  }
+
+  @keyframes wave {
+    40% {
+      transform: translateY(-0.05em);
+    }
+  }
+
+  /* Topic and entry labels grow slightly under the pointer. */
+  .magnify {
+    display: inline-block;
+    transform-origin: left center;
+    transition: transform 200ms var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    :is(a, button):hover > .magnify {
+      transform: scale(1.04);
+    }
+  }
+
+  /* Plus that turns into a minus when its topic is open. */
+  .toggle-icon {
+    position: relative;
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+  }
+
+  .toggle-icon::before,
+  .toggle-icon::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - 1px);
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: currentColor;
+    transition: transform 280ms var(--ease-out);
+  }
+
+  .toggle-icon::after {
+    transform: rotate(90deg);
+  }
+
+  [aria-expanded="true"] > .toggle-icon::after {
+    transform: rotate(90deg) scaleX(0);
+  }
+
+  /* Topic panels. Without JavaScript they stay open so every entry is reachable. */
+  .topic-panel {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 280ms var(--ease-out), visibility 0s;
+  }
+
+  .topic-panel > * {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  @media (scripting: enabled) {
+    .topic:has(> h2 [aria-expanded="false"]) > .topic-panel {
+      grid-template-rows: 0fr;
+      visibility: hidden;
+      transition: grid-template-rows 280ms var(--ease-out), visibility 0s 280ms;
+    }
+  }
+
+  /* Entry links. The current entry gets a short rule in the indent. */
+  .entry-link {
+    position: relative;
+    padding-left: 1.25rem;
+    color: var(--color-ink-muted);
+    transition: color 200ms var(--ease-out);
+  }
+
+  .entry-link:hover,
+  .entry-link[aria-current="page"] {
+    color: var(--color-ink);
+  }
+
+  .entry-link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: calc(0.5rem + 0.875rem - 1px);
+    left: 0;
+    width: 0.5rem;
+    height: 2px;
+    background-color: currentColor;
+  }
+
+  .entry-link:focus-visible {
+    outline-offset: 2px;
+  }
+
+  /* Buttons: solid rectangles. On hover the opposite colour sweeps in from the left. */
+  .btn {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.75rem 1.5rem;
+    font-family: var(--font-button);
+    font-size: var(--text-base);
+    line-height: 1.5rem;
+    transition: color 240ms var(--ease-out);
+  }
+
+  .btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 240ms var(--ease-out);
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn-light {
+    background-color: var(--color-sand);
+    color: var(--color-ink);
+  }
+
+  .btn-light::before {
+    background-color: var(--color-ink);
+  }
+
+  .btn-dark {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  .btn-dark::before {
+    background-color: var(--color-sand);
+  }
+
+  @media (hover: hover) {
+    .btn:hover::before {
+      transform: scaleX(1);
+    }
+
+    .btn-light:hover {
+      color: var(--color-paper);
+    }
+
+    .btn-dark:hover {
+      color: var(--color-ink);
+    }
+  }
+
+  /* Folded topic menu on desktop entry pages: an arrow and one short line per topic, against
+     the right edge. Hovering lengthens the lines in turn and brings the names in beside them. */
+  .rail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2rem;
+    padding-block: 1rem;
+    color: var(--color-ink);
+  }
+
+  .rail-arrow,
+  .panel-arrow svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+  }
+
+  .rail-arrow {
+    transition: translate 240ms var(--ease-out);
+  }
+
+  .rail-index {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1rem;
+  }
+
+  .rail-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 1.5rem;
+  }
+
+  .rail-line {
+    width: 1rem;
+    height: 2px;
+    background-color: var(--color-ink-muted);
+    transform-origin: right center;
+    transition:
+      scale 320ms var(--ease-out) calc(var(--i) * 40ms),
+      background-color 320ms var(--ease-out) calc(var(--i) * 40ms);
+  }
+
+  .rail-name {
+    position: absolute;
+    top: 50%;
+    right: 2.5rem;
+    translate: 0.5rem -50%;
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    color: var(--color-ink-muted);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 320ms var(--ease-out) calc(var(--i) * 40ms),
+      translate 320ms var(--ease-out) calc(var(--i) * 40ms),
+      color 200ms var(--ease-out);
+  }
+
+  /* data-quiet: set whenever the menu opens or closes, cleared once the pointer moves away (Reading.astro). */
+  @media (hover: hover) {
+    .rail:not([data-quiet]):hover .rail-arrow {
+      translate: -0.125rem 0;
+    }
+
+    .rail:not([data-quiet]):hover .rail-line {
+      scale: 1.5 1;
+      background-color: var(--color-ink);
+    }
+
+    .rail:not([data-quiet]):hover .rail-name {
+      opacity: 1;
+      translate: 0 -50%;
+      pointer-events: auto;
+    }
+
+    .rail-item:hover .rail-name {
+      color: var(--color-ink);
+    }
+  }
+
+  /* The full topic menu. Phones: a full-screen sheet opened by the Topics button.
+     Desktop: a framed panel that unfolds out of the rail's arrow and folds back into it. */
+  .topics-panel {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    padding: 2rem 1.5rem;
+    overflow-y: auto;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    opacity: 0;
+    transition: opacity 240ms var(--ease-out), overlay 240ms allow-discrete, display 240ms allow-discrete;
+  }
+
+  .topics-panel:popover-open {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  @media (width >= 64rem) {
+    .topics-panel {
+      /* Folded: only the small square around the arrow, in the top right corner, shows.
+         Reading.astro sets --arrow-top and --arrow-right from the rail's arrow before opening. */
+      --folded: inset(1.5rem 1.5rem calc(100% - 2.625rem) calc(100% - 2.625rem));
+      inset: auto;
+      top: calc(var(--arrow-top, 12rem) - 1.5rem - 1px);
+      left: calc(var(--arrow-right, 60rem) + 1.5rem + 1px - 24rem);
+      width: 24rem;
+      height: auto;
+      max-height: calc(100svh - var(--arrow-top, 12rem));
+      padding: 1.5rem;
+      border: 1px solid var(--color-rule);
+      opacity: 1;
+      clip-path: var(--folded);
+      transition: clip-path 360ms var(--ease-out), overlay 360ms allow-discrete, display 360ms allow-discrete;
+    }
+
+    .topics-panel:popover-open {
+      clip-path: inset(0);
+
+      @starting-style {
+        clip-path: var(--folded);
+      }
+    }
+
+    /* The arrow turns to point back as the panel unfolds, and turns again as it folds. */
+    .panel-arrow svg {
+      transition: rotate 360ms var(--ease-out);
+    }
+
+    .topics-panel:popover-open .panel-arrow svg {
+      rotate: 180deg;
+
+      @starting-style {
+        rotate: 0deg;
+      }
+    }
+  }
+
+  /* Long-form text: entries and the home statement. */
+  .prose {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
+  @media (width >= 64rem) {
+    .prose {
+      font-size: var(--text-lg);
+      line-height: var(--text-lg--line-height);
+    }
+  }
+
+  .prose > * + * {
+    margin-top: 1.5rem;
+  }
+
+  .prose p {
+    text-wrap: pretty;
+  }
+
+  .prose h2 {
+    margin-top: 3rem;
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: var(--text-2xl--line-height);
+    text-wrap: balance;
+  }
+
+  .prose h3 {
+    margin-top: 2rem;
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  .prose :is(h2, h3) + * {
+    margin-top: 1rem;
+  }
+
+  .prose a {
+    text-decoration: underline;
+    text-decoration-color: var(--color-ink-muted);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 200ms var(--ease-out);
+  }
+
+  .prose a:hover {
+    text-decoration-color: var(--color-ink);
+  }
+
+  .prose strong {
+    font-weight: 600;
+  }
+
+  .prose blockquote {
+    border-left: 2px solid var(--color-ink);
+    padding-left: 1.5rem;
+    font-style: italic;
+  }
+
+  .prose :is(ul, ol) {
+    padding-left: 1.5rem;
+  }
+
+  .prose ul {
+    list-style: disc;
+  }
+
+  .prose ol {
+    list-style: decimal;
+  }
+
+  .prose li + li {
+    margin-top: 0.5rem;
+  }
+
+  .prose li::marker {
+    color: var(--color-ink-muted);
+  }
+
+  .prose hr {
+    margin-block: 3rem;
+    border: 0;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .prose img {
+    width: 100%;
+    height: auto;
+  }
+
+  .prose code {
+    padding: 0.125em 0.25em;
+    background-color: var(--color-sand);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.875em;
+  }
+}

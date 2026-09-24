@@ -1,0 +1,30 @@
+---
+import Letters from './Letters.astro';
+import { SITE } from '../config.js';
+
+// "title": the large heading on the home page. "logo": the small link home on every other page.
+const { variant = 'title' } = Astro.props;
+
+let index = 0;
+const split = (text) => text.split(' ').map((word) => [...word].map((char) => ({ char, i: index++ })));
+const title = [split('The Secrets'), split('of the Universe')];
+const byline = [split(`by ${SITE.author}`)];
+---
+
+{variant === 'title' ? (
+  <div class="wave w-fit">
+    <h1 class="vt-brand font-display text-3xl lg:text-4xl xl:text-5xl">
+      <span class="sr-only">{SITE.title}</span>
+      <span aria-hidden="true"><Letters lines={title} /></span>
+    </h1>
+    <p class="mt-2 text-right font-display text-xl xl:text-2xl">
+      <span class="sr-only">by {SITE.author}</span>
+      <span aria-hidden="true"><Letters lines={byline} /></span>
+    </p>
+  </div>
+) : (
+  <a href="/" class="wave vt-brand block w-fit font-display text-xl leading-7">
+    <span class="sr-only">{SITE.title}, home</span>
+    <span aria-hidden="true"><Letters lines={title} /></span>
+  </a>
+)}

@@ -1,0 +1,11 @@
+---
+// A link when given `href`, otherwise a button. Extra attributes (popovertarget, aria-label) pass through.
+const { href, variant = 'light', type = 'button', class: className, ...attrs } = Astro.props;
+const classes = ['btn', variant === 'dark' ? 'btn-dark' : 'btn-light', className];
+---
+
+{href ? (
+  <a href={href} class:list={classes} {...attrs}><slot /></a>
+) : (
+  <button type={type} class:list={classes} {...attrs}><slot /></button>
+)}

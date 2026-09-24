@@ -1,0 +1,65 @@
+---
+// The topic list. The topic holding the current entry starts open.
+// `compact` uses smaller topic headers on desktop, for the menu panel.
+const { topics, currentId, idPrefix, compact = false, class: className } = Astro.props;
+---
+
+<nav aria-label="Topics" class={className}>
+  <ul class="divide-y divide-rule">
+    {topics.map((topic) => {
+      const panelId = `${idPrefix}-${topic.id}`;
+      const open = topic.entries.some((entry) => entry.id === currentId);
+      return (
+        <li class="topic">
+          <h2>
+            <button
+              type="button"
+              class:list={['topic-toggle flex w-full items-center justify-between gap-4 py-4 text-left font-display text-2xl', compact && 'lg:py-3 lg:text-xl']}
+              aria-expanded={String(open)}
+              aria-controls={panelId}
+            >
+              <span class="magnify">{topic.name}</span>
+              <span class="toggle-icon" aria-hidden="true"></span>
+            </button>
+          </h2>
+          <div id={panelId} class="topic-panel">
+            <div>
+              {topic.entries.length > 0 ? (
+                <ul class="pb-4 pl-1 pr-4">
+                  {topic.entries.map((entry) => (
+                    <li>
+                      <a
+                        href={entry.href}
+                        aria-current={entry.id === currentId ? 'page' : undefined}
+                        class="entry-link inline-block py-2 text-base"
+                      >
+                        <span class="magnify">{entry.data.title}{entry.data.draft && <span class="ml-2 text-sm">Draft</span>}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="pb-6 pl-6 text-base text-ink-muted italic">Nothing published yet.</p>
+              )}
+            </div>
+          </div>
+        </li>
+      );
+    })}
+  </ul>
+</nav>
+
+<script>
+  // One topic open at a time: opening a topic closes the others in the same list.
+  for (const toggle of document.querySelectorAll('.topic-toggle')) {
+    toggle.addEventListener('click', () => {
+      const open = toggle.getAttribute('aria-expanded') !== 'true';
+      if (open) {
+        for (const other of toggle.closest('nav').querySelectorAll('.topic-toggle[aria-expanded="true"]')) {
+          other.setAttribute('aria-expanded', 'false');
+        }
+      }
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+  }
+</script>

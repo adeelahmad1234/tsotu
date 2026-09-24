@@ -1,0 +1,13 @@
+---
+import Reading from '../layouts/Reading.astro';
+import Button from '../components/Button.astro';
+import { getTopics } from '../lib/topics.js';
+
+const topics = await getTopics();
+---
+
+<Reading title="Page not found" description="This page does not exist." topics={topics} noindex>
+  <h1 class="font-display text-3xl lg:text-4xl">Page not found</h1>
+  <p class="mt-6 max-w-prose text-base lg:text-lg">There is nothing at this address. Choose a topic, or go back to the home page.</p>
+  <Button href="/" variant="dark" class="mt-8">Home page</Button>
+</Reading>

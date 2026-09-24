@@ -1,0 +1,7 @@
+---
+// Renders lines of text as separate letters so the hover wave can move each one.
+// `lines` is an array of lines; a line is an array of words; a word is an array of { char, i }.
+const { lines } = Astro.props;
+---
+
+{lines.map((line) => <span class="block">{line.map((word, w) => <Fragment>{w > 0 ? ' ' : ''}<span class="whitespace-nowrap">{word.map(({ char, i }) => <span class="wave-char" style={`--i:${i}`}>{char}</span>)}</span></Fragment>)}</span>)}

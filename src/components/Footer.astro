@@ -1,0 +1,19 @@
+---
+import { SITE, SOCIAL_LINKS } from '../config.js';
+
+const { class: className } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class:list={['text-sm text-ink-muted', className]}>
+  {SOCIAL_LINKS.length > 0 && (
+    <ul class="mb-2 flex flex-wrap gap-x-6 gap-y-2">
+      {SOCIAL_LINKS.map((link) => (
+        <li>
+          <a href={link.url} rel="me" class="underline decoration-rule underline-offset-4 transition-colors hover:text-ink hover:decoration-ink">{link.name}</a>
+        </li>
+      ))}
+    </ul>
+  )}
+  <p>© {year} {SITE.author}</p>
+</footer>
