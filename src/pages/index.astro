@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Brand from '../components/Brand.astro';
 import Footer from '../components/Footer.astro';
+import Orrery from '../components/Orrery.astro';
 import TopicNav from '../components/TopicNav.astro';
 import { getTopics } from '../lib/topics.js';
 import { Content as Statement, rawContent } from '../content/home.md';
@@ -11,7 +12,7 @@ const hasStatement = rawContent().trim().length > 0;
 ---
 
 <Base>
-  <div class="mx-auto grid min-h-svh max-w-7xl grid-rows-[auto_auto_1fr] px-6 py-12 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:px-12 lg:py-24">
+  <div class="mx-auto grid min-h-svh max-w-7xl grid-rows-[auto_auto_auto_1fr] px-6 py-12 lg:grid-cols-12 lg:grid-rows-[auto_1fr_auto] lg:gap-x-8 lg:px-12 lg:pt-24 lg:pb-12">
     <header class="lg:col-span-5">
       <Brand variant="title" />
       {hasStatement && (
@@ -20,10 +21,12 @@ const hasStatement = rawContent().trim().length > 0;
         </div>
       )}
     </header>
-    <!-- lg:-mt-3 lifts the first topic so its capitals line up with the title's. -->
-    <main class="mt-12 lg:col-span-5 lg:col-start-8 lg:-mt-3">
+    <!-- lg:-mt-3 lifts the first topic so its capitals line up with the title's.
+         Spanning two rows lets the list grow without moving the figure beside it. -->
+    <main class="mt-12 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:-mt-3">
       <TopicNav topics={topics} idPrefix="home" class="vt-topics" />
     </main>
-    <Footer class="mt-24 self-end lg:col-span-5" />
+    <Orrery class="mt-16 lg:col-span-5 lg:row-start-2 lg:mt-12 lg:self-center" />
+    <Footer class="mt-24 self-end lg:col-span-5 lg:mt-12" />
   </div>
 </Base>

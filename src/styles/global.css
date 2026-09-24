@@ -479,6 +479,30 @@
     }
   }
 
+  /* Fig. 1 on the home page (Orrery.astro): the lines canvas under the planets canvas. */
+  .orrery {
+    width: min(100%, 20rem);
+  }
+
+  /* On desktop it takes the height left under the title, so the home page fits one screen. */
+  @media (width >= 64rem) {
+    .orrery {
+      width: min(100%, clamp(14rem, 100svh - 34rem, 26rem));
+    }
+  }
+
+  .orrery-stage {
+    position: relative;
+    aspect-ratio: 1;
+  }
+
+  .orrery-stage canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
   /* Long-form text: entries and the home statement. */
   .prose {
     font-size: var(--text-base);

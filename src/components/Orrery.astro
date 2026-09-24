@@ -1,0 +1,144 @@
+---
+// Fig. 1 on the home page. Earth and Venus start where they are today and are joined by a line
+// every four days. Five Venus passes take almost exactly eight years, so the lines draw a
+// five-petalled rose. Hovering or pressing speeds up time.
+const { class: className } = Astro.props;
+---
+
+<aside class={className}>
+  <figure class="orrery" data-orrery>
+    <div class="orrery-stage">
+      <canvas aria-hidden="true"></canvas>
+      <canvas aria-hidden="true"></canvas>
+    </div>
+    <figcaption class="mt-4 text-sm text-ink-muted"><span class="italic">Fig. 1.</span> Earth and Venus from today, joined every four days for eight years.</figcaption>
+  </figure>
+</aside>
+
+<script>
+  const EARTH = 365.256; // orbital periods in days
+  const VENUS = 224.701;
+  const CYCLE = 2922; // eight years
+  const STEP = 4; // days between lines
+  const PACE = 60; // days per second: the rose takes about 50 seconds
+  const FAST = 6; // time runs this much faster under the pointer
+
+  const css = getComputedStyle(document.documentElement);
+  const ink = css.getPropertyValue('--color-ink').trim();
+  const rule = css.getPropertyValue('--color-rule').trim();
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Mean longitudes today (J2000 elements), so both planets start where they really are.
+  const sinceJ2000 = (Date.now() - Date.UTC(2000, 0, 1, 12)) / 864e5;
+  const earthStart = ((100.464 + 0.9856474 * sinceJ2000) * Math.PI) / 180;
+  const venusStart = ((181.979 + 1.6021302 * sinceJ2000) * Math.PI) / 180;
+
+  for (const figure of document.querySelectorAll('[data-orrery]')) {
+    const stage = figure.querySelector('.orrery-stage');
+    const [traceCanvas, liveCanvas] = stage.querySelectorAll('canvas');
+    const trace = traceCanvas.getContext('2d');
+    const live = liveCanvas.getContext('2d');
+    let size, mid, rEarth, rVenus;
+    let day = still ? CYCLE : 0; // time shown, in days from today
+    let drawn = 0; // days already joined by a line
+    let speed = 1;
+    let target = 1;
+    let last = 0;
+    let frame = 0;
+
+    // Counterclockwise, as seen from above the solar system.
+    const at = (start, period, r, d) => {
+      const a = start + (2 * Math.PI * d) / period;
+      return [mid + r * Math.cos(a), mid - r * Math.sin(a)];
+    };
+    const earth = (d) => at(earthStart, EARTH, rEarth, d);
+    const venus = (d) => at(venusStart, VENUS, rVenus, d);
+
+    // Join the planets for every step up to `until`, as one path.
+    const join = (until) => {
+      trace.beginPath();
+      for (; drawn <= until; drawn += STEP) {
+        trace.moveTo(...earth(drawn));
+        trace.lineTo(...venus(drawn));
+      }
+      trace.stroke();
+    };
+
+    const dot = (ctx, [x, y], r) => {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fill();
+    };
+
+    const drawLive = () => {
+      live.clearRect(0, 0, size, size);
+      const e = earth(day);
+      const v = venus(day);
+      live.globalAlpha = 0.35;
+      live.beginPath();
+      live.moveTo(...e);
+      live.lineTo(...v);
+      live.stroke();
+      live.globalAlpha = 1;
+      dot(live, e, 3.5);
+      dot(live, v, 2.5);
+      // The Sun as its old symbol: a ring with a point.
+      live.beginPath();
+      live.arc(mid, mid, 4.5, 0, 2 * Math.PI);
+      live.stroke();
+      dot(live, [mid, mid], 1.25);
+    };
+
+    // Size the canvases to the stage, then redraw orbits and every line so far.
+    const layout = () => {
+      const ratio = Math.min(devicePixelRatio, 2);
+      size = stage.clientWidth;
+      mid = size / 2;
+      rEarth = mid - 6;
+      rVenus = rEarth * 0.7233;
+      for (const ctx of [trace, live]) {
+        ctx.canvas.width = ctx.canvas.height = Math.round(size * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        ctx.strokeStyle = ctx.fillStyle = ink;
+      }
+      trace.strokeStyle = rule;
+      trace.lineWidth = 1;
+      for (const r of [rEarth, rVenus]) {
+        trace.beginPath();
+        trace.arc(mid, mid, r, 0, 2 * Math.PI);
+        trace.stroke();
+      }
+      trace.strokeStyle = ink;
+      trace.globalAlpha = 0.06;
+      trace.lineWidth = 0.75;
+      const until = Math.min(day, CYCLE);
+      drawn = 0;
+      join(until);
+      drawLive();
+    };
+
+    const tick = (now) => {
+      const dt = Math.min((now - (last || now)) / 1000, 0.1);
+      last = now;
+      speed += (target - speed) * Math.min(dt * 4, 1);
+      // Once the rose is complete the planets slow to a calm orbit.
+      day += dt * PACE * speed * (day < CYCLE ? 1 : 0.15);
+      if (drawn <= CYCLE) join(Math.min(day, CYCLE));
+      drawLive();
+      frame = requestAnimationFrame(tick);
+    };
+
+    new ResizeObserver(layout).observe(stage);
+    if (still) continue;
+
+    // Only animate while the figure is on screen.
+    new IntersectionObserver(([entry]) => {
+      cancelAnimationFrame(frame);
+      last = 0;
+      if (entry.isIntersecting) frame = requestAnimationFrame(tick);
+    }).observe(figure);
+
+    figure.addEventListener('pointerenter', () => (target = FAST));
+    figure.addEventListener('pointerleave', () => (target = 1));
+  }
+</script>
