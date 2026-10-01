@@ -5,11 +5,10 @@ export const SITE = {
 };
 
 // Topics appear in this order. Each one has a folder with the same id in src/content/entries.
+// To add a topic, add a line such as { id: 'philosophy', name: 'Philosophy' } and create
+// src/content/entries/philosophy/. The home list, rail and menu pick it up by themselves.
 export const TOPICS = [
-  { id: 'religion', name: 'Religion' },
-  { id: 'philosophy', name: 'Philosophy' },
-  { id: 'life', name: 'Life' },
-  { id: 'body', name: 'Body' },
+  { id: 'topics', name: 'Topics' },
 ];
 
 // Profiles listed in the footer, for example { name: 'Instagram', url: 'https://www.instagram.com/yourname' }.
